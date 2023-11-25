@@ -1,7 +1,13 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path_provider/path_provider.dart';
+
+import 'tela_favoritos.dart';
+//import 'package:vocsy_epub_viewer/epub_viewer.dart';
+//import 'package:vocsy_epub_viewer/epub_viewer.dart';
 
 class BookListScreen extends StatefulWidget {
   @override
@@ -62,7 +68,12 @@ class _BookListScreenState extends State<BookListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: const Text('Lista de Livros'),
+          actions: [
+            // TextButton(onPressed:(){Navigator.push(
+            //   context,
+            //   MaterialPageRoute(builder: (context) => FavoritosScreen()),
+            // );}, child: Text('Favoritos'))
+            ],
         ),
         body: Padding(
           padding: const EdgeInsets.only(left: 15.0, right: 15.0),
@@ -79,11 +90,51 @@ class _BookListScreenState extends State<BookListScreen> {
                       children: [
                         Stack(
                           children: [
-                            Image.network(
-                              book['cover_url'],
-                              width: 100,
-                              height: 160,
-                              fit: BoxFit.cover,
+                            GestureDetector(
+                              onTap: () async {
+                                if (baixadosList.contains(book['id'])) {
+                                  final Directory appDocDir =
+                                      await getApplicationDocumentsDirectory();
+                                  final String filePath =
+                                      '${appDocDir.path}/${book['id']}.epub';
+
+                                  // VocsyEpub.setConfig(
+                                  //   themeColor: Theme.of(context).primaryColor,
+                                  //   identifier: "iosBook",
+                                  //   scrollDirection:
+                                  //       EpubScrollDirection.ALLDIRECTIONS,
+                                  //   allowSharing: true,
+                                  //   enableTts: true,
+                                  //   nightMode: true,
+                                  // );
+
+                                  // VocsyEpub.open(
+                                  //   filePath,
+                                  //   lastLocation: EpubLocator.fromJson({
+                                  //     "bookId": "2239",
+                                  //     "href": "/OEBPS/ch06.xhtml",
+                                  //     "created": 1539934158390,
+                                  //     "locations": {
+                                  //       "cfi":
+                                  //           "epubcfi(/0!/4/4[simple_book]/2/2/6)"
+                                  //     }
+                                  //   }),
+                                  // );
+
+                                  // VocsyEpub.locatorStream.listen((locator) {
+                                  //   print(
+                                  //       'LOCATOR: ${EpubLocator.fromJson(jsonDecode(locator))}');
+                                  // });
+                                } else
+                                  _baixarEbook(
+                                      book['download_url'], book['id']);
+                              },
+                              child: Image.network(
+                                book['cover_url'],
+                                width: 100,
+                                height: 160,
+                                fit: BoxFit.cover,
+                              ),
                             ),
                             Positioned(
                                 top: 0.1,
@@ -205,6 +256,23 @@ class _BookListScreenState extends State<BookListScreen> {
       print('Item removido: $lista');
     } else {
       print('Lista não encontrada!');
+    }
+  }
+
+  Future<void> _baixarEbook(String url, int id) async {
+    final http.Response response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      final Directory appDocDir = await getApplicationDocumentsDirectory();
+      final String filePath = '${appDocDir.path}/${id}.epub';
+
+      final File file = File(filePath);
+      await file.writeAsBytes(response.bodyBytes);
+
+      _adicionaItem('baixados', id);
+      print('Ebook baixado: $filePath');
+    } else {
+      throw Exception('Falha ao baixar!');
     }
   }
 }

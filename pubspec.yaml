@@ -37,6 +37,9 @@ dependencies:
   cupertino_icons: ^1.0.6
   http: ^1.1.1
   shared_preferences: ^2.2.2
+  path_provider: ^2.0.14
+  vocsy_epub_viewer: ^1.0.1 
+  #flutter_ebook: ^0.2.2
 
 dev_dependencies:
   flutter_test:
